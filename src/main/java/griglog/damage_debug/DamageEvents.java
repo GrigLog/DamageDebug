@@ -1,12 +1,8 @@
 package griglog.damage_debug;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.NewChatGui;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
@@ -14,11 +10,14 @@ import net.minecraftforge.event.entity.living.LivingHealEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import java.text.DecimalFormat;
 
+import static net.minecraft.util.Util.NIL_UUID;
 
-public class ClientDamageEvents {
+@Mod.EventBusSubscriber
+public class DamageEvents {
     static String buffer;
     static float absorbtion = 0;
     static DecimalFormat df = new DecimalFormat("#.###");
@@ -35,20 +34,16 @@ public class ClientDamageEvents {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void entityGotHitAfterArmor(LivingDamageEvent event) {
         LivingEntity target = event.getEntityLiving();
-        TextFormatting color = TextFormatting.YELLOW;
-        if (target instanceof PlayerEntity)
+        TextFormatting color;
+        PlayerEntity player;
+        if (target instanceof PlayerEntity) {
+            player = (PlayerEntity) target;
             color = TextFormatting.DARK_RED;
-        else {
-            boolean playerNear = false;
-            for (Entity e : target.level.getEntities(null,
-                    new AxisAlignedBB(target.position().add(-10, -10, -10), target.position().add(10, 10, 10)))){
-                if (e instanceof PlayerEntity) {
-                    playerNear = true;
-                    break;
-                }
-            }
-            if (!playerNear)
+        } else {
+            player = target.level.getNearestPlayer(target, 10);
+            if (player == null)
                 return;
+            color = TextFormatting.YELLOW;
         }
         float damage = event.getAmount() + absorbtion - target.getAbsorptionAmount();
         buffer += df.format(damage) + ") ";
@@ -59,7 +54,7 @@ public class ClientDamageEvents {
             buffer += "unbl ";
         if (ds.isBypassMagic())
             buffer += "abs ";
-        printChat(buffer, color);
+        send(player, buffer, color);
         buffer = "";
     }
 
@@ -70,14 +65,18 @@ public class ClientDamageEvents {
         LivingEntity target = event.getEntityLiving();
         if (target == null)
             return;
-        TextFormatting color = target instanceof PlayerEntity ? TextFormatting.GREEN : TextFormatting.DARK_GREEN;
-        printChat("(" + df.format(event.getAmount()) + ")", color);
+        if (target instanceof PlayerEntity){
+            send((PlayerEntity) target, "("+df.format(event.getAmount())+")", TextFormatting.GREEN);
+        } else {
+            PlayerEntity player = target.level.getNearestPlayer(target, 10);
+            if (player == null)
+                return;
+            send(player, "("+df.format(event.getAmount())+")", TextFormatting.DARK_GREEN);
+        }
     }
 
-    static void printChat(String s, TextFormatting color) {
-        NewChatGui chat = Minecraft.getInstance().gui.getChat();
-        StringTextComponent msg = new StringTextComponent(s);
-        chat.addMessage(new StringTextComponent(color + s));
+    static void send(PlayerEntity player, String text, TextFormatting color){
+        player.sendMessage(new StringTextComponent(color + text), NIL_UUID);
     }
 }
 
