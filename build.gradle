@@ -16,7 +16,7 @@ apply plugin: 'maven-publish'
 
 version = '1.0'
 group = 'griglog'
-archivesBaseName = 'damage_debug'
+archivesBaseName = 'DamageDebug-1.16'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(8)
 

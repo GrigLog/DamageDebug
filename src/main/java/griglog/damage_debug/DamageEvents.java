@@ -24,6 +24,8 @@ public class DamageEvents {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void entityGotHitBeforeArmor(LivingHurtEvent event) {
+        if (!Config.show)
+            return;
         LivingEntity target = event.getEntityLiving();
         if (target == null)
             return;
@@ -33,6 +35,8 @@ public class DamageEvents {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void entityGotHitAfterArmor(LivingDamageEvent event) {
+        if (!Config.show)
+            return;
         LivingEntity target = event.getEntityLiving();
         TextFormatting color;
         PlayerEntity player;
@@ -60,7 +64,7 @@ public class DamageEvents {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void entityGotHitBeforeArmor(LivingHealEvent event) {
-        if (!DamageDebug.showHeal)
+        if (!Config.show || !Config.showHeals)
             return;
         LivingEntity target = event.getEntityLiving();
         if (target == null)
